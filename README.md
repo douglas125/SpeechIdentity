@@ -14,4 +14,12 @@ Identity verification from speech
 
 ### Inference with pretrained models
 
+TODO
+
 ### Training
+
+Download data
+
+Prepare tfrecords
+
+Train model
