@@ -199,15 +199,39 @@ def main():
     print(f'Generating tfrecords for: {files}')
     files = [os.path.join(args.folder, x) for x in files]
     for file in files:
-        atr = AudioTarReader(file)
+        atr = None
         for split in ['train', 'dev', 'test']:
-            audio_content = atr.retrieve_per_user_data(split=split)
-            pia = PersonIdAudio(audio_content, sr, verbose=1)
-            audio_dataset = pia.get_tf_dataset()
-            tfrecords_file = pia.save_tfrecords_file(
-                file + f'_{split}.tfrecords.gzip'
-            )
-            print(f'Saved {tfrecords_file}')
+            target_name = file + f'_{split}.tfrecords.gzip'
+            if not os.path.isfile(target_name):
+                # only read on demand
+                if atr is None:
+                    atr = AudioTarReader(file)
+
+                audio_content = atr.retrieve_per_user_data(split=split)
+
+                ### temp code
+                """
+                # the tfrecords from English is too big for Colab
+                # this is a partial solution
+                print(f'********** {len(audio_content)}')
+                keys = list(audio_content.keys())
+                keys = keys[0:len(keys) // 2]
+                audio_content2 = {}
+                for k in keys:
+                    audio_content2[k] = audio_content[k]
+                audio_content = audio_content2
+                print(f'********** {len(audio_content)}')
+                """
+                ###
+
+                pia = PersonIdAudio(audio_content, sr, verbose=1)
+                audio_dataset = pia.get_tf_dataset()
+                tfrecords_file = pia.save_tfrecords_file(
+                    target_name
+                )
+                print(f'Saved {tfrecords_file}')
+            else:
+                print(f'Skipping {target_name}')
 
 
 if __name__ == "__main__":
