@@ -8,6 +8,7 @@ from tensorflow.keras import layers as L
 
 from create_audio_tfrecords import AudioTarReader, PersonIdAudio
 
+
 # make compatible with tensorflow 2.4
 # this was supposed to be tfio.audio.spectrogram
 def spectrogram_fn(input, nfft, window, stride, name=None):
@@ -35,6 +36,7 @@ def spectrogram_fn(input, nfft, window, stride, name=None):
         )
     )
 
+
 def normalized_mel_spectrogram(x, sr=48000, n_mel_bins=80):
     spec_stride = 256
     spec_len = 1024
@@ -44,7 +46,8 @@ def normalized_mel_spectrogram(x, sr=48000, n_mel_bins=80):
     )
 
     num_spectrogram_bins = spec_len // 2 + 1  # spectrogram.shape[-1]
-    lower_edge_hertz, upper_edge_hertz, num_mel_bins = 80.0, 10000.0, n_mel_bins
+    lower_edge_hertz, upper_edge_hertz = 80.0, 10000.0
+    num_mel_bins = n_mel_bins
     linear_to_mel_weight_matrix = tf.signal.linear_to_mel_weight_matrix(
       num_mel_bins, num_spectrogram_bins, sr, lower_edge_hertz,
       upper_edge_hertz)
@@ -62,11 +65,13 @@ def normalized_mel_spectrogram(x, sr=48000, n_mel_bins=80):
 
 
 def BaseSpeechEmbeddingModel(inputLength=None, rnn_func=L.LSTM, rnn_units=128):
-    # input is the first channel of the decoded mp3, ie, 
+    # input is the first channel of the decoded mp3, ie,
     # tfio.audio.decode_mp3(data)[:, 0]
 
     inp = L.Input((inputLength,), name='input')
-    mel_spec = L.Lambda(lambda z: normalized_mel_spectrogram(z), name='normalized_spectrogram')(inp)
+    mel_spec = L.Lambda(
+        lambda z: normalized_mel_spectrogram(z), name='normalized_spectrogram'
+    )(inp)
 
     # receive normalized mel spectrogram as input instead
     # inp = L.Input((inputLength, n_mel_bins), name='input')
@@ -77,13 +82,15 @@ def BaseSpeechEmbeddingModel(inputLength=None, rnn_func=L.LSTM, rnn_units=128):
     # mel_spec = L.LayerNormalization()(mel_spec)
 
     x = L.Bidirectional(
-        rnn_func(rnn_units, return_sequences=True)
+        rnn_func(rnn_units,
+                 return_sequences=True)
     )(mel_spec)  # [b_s, seq_len, vec_dim]
     x = L.Bidirectional(
         rnn_func(rnn_units, return_sequences=False)
     )(x)  # [b_s, seq_len, vec_dim]
 
-    x = L.Dense(rnn_units, activation=None)(x)  # No activation on final dense layer
+    # No activation on final dense layer
+    x = L.Dense(rnn_units, activation=None)(x)
     # L2 normalize embeddings
     # note: L2 returns normalized, norm
     x = L.Lambda(lambda z: tf.math.l2_normalize(z, axis=1), name='output')(x)
@@ -100,7 +107,8 @@ def main():
     physical_devices = tf.config.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-    train_files = [x for x in os.listdir('data') if x.endswith('train.tfrecords.gzip')]
+    train_files = [x for x in os.listdir('data')
+                   if x.endswith('train.tfrecords.gzip')]
     train_files = [os.path.join('data', x) for x in train_files]
 
     # pick one file
@@ -128,6 +136,7 @@ def main():
     batch_size = 128 * 3
 
     return_mel_spec = False
+
     def mp3_decode_fn(audio_bytes, audio_class):
         # check if limiting output size helps
         # return tfio.audio.decode_mp3(audio_bytes)[:, 0], audio_class
@@ -173,7 +182,7 @@ def main():
 
     history = m.fit(
         train_set,
-        steps_per_epoch = n_train_samples // batch_size,
+        steps_per_epoch=n_train_samples // batch_size,
         epochs=200,
         callbacks=[model_checkpoint_callback]
     )
