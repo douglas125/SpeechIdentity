@@ -18,6 +18,40 @@ This repository contains source code to train and use speech embedding models in
 
 ### Inference with pretrained model
 
+Import TensorFlow libraries and files with auxiliary functions:
+
+```
+import os
+import tensorflow as tf
+import tensorflow_io as tfio
+
+import train_speech_id_model
+```
+
+Load the model and perform inference on a file:
+
+```
+model = tf.keras.models.load_model('speech-id-model-110')
+cur_data = tfio.audio.AudioIOTensor(file)
+audio_data = cur_data.to_tensor()[:, 0]
+# set batch size to 1, extract first element
+audio_embedding = model.predict(
+	tf.expand_dims(audio_data, axis=0)
+)[0]
+```
+
+Note that the expected sampling rate is 48 kHz, used in the training data. An example is provided in the script `quick_inference.py`, which loads and compares the embeddings of all MP3 files in the current folder. The output should be:
+
+```
+Comparing ['sample_1a.mp3', 'sample_1b.mp3', 'sample_2.mp3']
+Processing sample_1a.mp3 with sample rate of 48000
+Processing sample_1b.mp3 with sample rate of 48000
+Processing sample_2.mp3 with sample rate of 48000
+sample_1a.mp3 and sample_1b.mp3: Same person: 0.7631306052207947
+sample_1a.mp3 and sample_2.mp3: Different people: 1.1691123247146606
+sample_1b.mp3 and sample_2.mp3: Different people: 1.3037692308425903
+```
+
 This model achieves specificity = 98.3% and sensitivity = 60.2% using a threshold level of 0.83. It is very simple to tune the value to an application specific needs - the lower the threshold, the more similar two audios need to be (in embedding space) to be considered "same" person.
 
 ![Speaker identifiability English](pictures/boxplot_identifiability_en.png)

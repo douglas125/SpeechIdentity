@@ -1,7 +1,7 @@
 import os
 # suppress tensorflow messages
 # include this if convenient
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 import numpy as np
 import tensorflow as tf
 import tensorflow_io as tfio
