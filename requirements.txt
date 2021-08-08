@@ -4,3 +4,4 @@ pandas==1.2.4
 tqdm==4.61.2
 matplotlib==3.3.4
 ipywidgets
+scikit-learn

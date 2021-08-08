@@ -9,6 +9,7 @@ from tensorflow.keras import layers as L
 from create_audio_tfrecords import AudioTarReader, PersonIdAudio
 
 # make compatible with tensorflow 2.4
+# this was supposed to be tfio.audio.spectrogram
 def spectrogram_fn(input, nfft, window, stride, name=None):
     """
     Create spectrogram from audio.
