@@ -1,5 +1,5 @@
 python==3.8.10
-numpy==1.19.2
+numpy==1.21.0
 pandas==1.2.4
 tqdm==4.61.2
 matplotlib==3.3.4
